@@ -3,7 +3,7 @@ import hashlib
 import hmac as hmac_lib
 import requests
 import time
-import urlparse
+import urllib.parse
 
 
 def oauth2(access_token, client_id, client_secret=None, refresh_token=None, expires_at=None, server='https://localbitcoins.com'):
@@ -37,10 +37,10 @@ class Connection():
     def call(self, method, url, params=None, stream=False, files=None):
         method = method.upper()
         if method not in ['GET', 'POST']:
-            raise Exception(u'Invalid method {}!'.format(method))
+            raise Exception('Invalid method {}!'.format(method))
 
         if method == 'GET' and files:
-            raise Exception(u'You cannot send files with GET method!')
+            raise Exception('You cannot send files with GET method!')
 
         # If URL is absolute, then convert it
         if url.startswith(self.server):
@@ -87,13 +87,13 @@ class Connection():
                 # GET method
                 else:
                     api_request = requests.Request('GET', self.server + url, params=params).prepare()
-                    params_encoded = urlparse.urlparse(api_request.url).query
+                    params_encoded = urllib.parse.urlparse(api_request.url).query
 
                 # Calculate signature
                 message = nonce + self.hmac_key + str(url)
                 if params_encoded:
                     message += str(params_encoded)
-                signature = hmac_lib.new(self.hmac_secret, msg=message, digestmod=hashlib.sha256).hexdigest().upper()
+                signature = hmac_lib.new(bytes(self.hmac_secret, 'utf-8'), msg=bytes(message, 'utf-8'), digestmod=hashlib.sha256).hexdigest().upper()
 
                 # Store signature and other stuff to headers
                 api_request.headers['Apiauth-Key'] = self.hmac_key
@@ -116,9 +116,9 @@ class Connection():
 
                 return response
 
-            raise Exception(u'Nonce is too small!')
+            raise Exception('Nonce is too small!')
 
-        raise Exception(u'No OAuth2 or HMAC connection initialized!')
+        raise Exception('No OAuth2 or HMAC connection initialized!')
 
     def get_access_token(self):
         return self.access_token
